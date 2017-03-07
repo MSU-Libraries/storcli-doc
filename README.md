@@ -155,7 +155,25 @@ storcli64 /c0/e5/sall show
 
 Updating Firmware
 ---------------------------
-TODO  
+To view your current firmware package and version, you can run the following. Remember to replace the `x`
+in `/cx` with your controller number.  
+```
+storcli64 /cx show | grep "^FW "
+```
+
+To update firmware, download the latest firmware from the official site. This will be the same place where
+you downloaded StorCLI from. Unzip the file and read over any `.txt` files provided for additional instructions
+or precautions. If you were provided with multiple `.rom` files, read the `.txt` file to ensure you use the
+correct one.  
+
+Upgrading firmware to a newer version is _typically_ a "live" action, meaning you can do it while the
+controller is running. However, there may be exceptions to this; be sure to read the provided `.txt` file for
+details. Downgrading firmware to a prior version is very likely **not** a live action, so be cautious.  
+
+To update the firmware for controller `0` using rom file `mr3108fw.rom`:  
+```
+storcli64 /c0 download file=mr3108fw.rom
+```
 
 
 Monitoring and Notifications
@@ -165,7 +183,19 @@ TODO
 
 Silence the Alarm
 ---------------------------
-TODO  
+During any failure or recovery, the controller will trigger an audible alarm that will continue to sound until
+all aspects of the hardware are returned to an ideal state. The means, that even once you replace a failed
+hard drive, the alarm will continue to sound until the RAID that was degraded has fully rebuilt back to its
+original state. Obviously, this can be an annoyance.  
+
+To silence an alarm means to stop it from sounding due to all existing known problems. This is distinctly different
+from disabling an alarm; disabling prevents the alarm from sounding for any future problems, meaning you have to
+remember to re-enable it later. As a general rule, do not disable and alarm, just silence it.  
+
+To silence the alarm for controller `0`, you can run:  
+```
+storcli64 /c0 set alarm=silence
+```
 
 
 Set a Global Hotspare
