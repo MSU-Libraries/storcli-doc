@@ -10,7 +10,7 @@ Table of Contents
 * [Updating Firmware](#updating-firmware)
 * [Monitoring and Notifications](#monitoring-and-notifications)
 * [Silence the Alarm](#silence-the-alarm)
-* [Set a Global Hotspare](#set-a-global-hotspare)
+* [Set a Hotspare Drive](#set-a-hotspare-drive)
 
 
 Introduction
@@ -55,7 +55,7 @@ likely be 0, 1 and 2.
 **Virtual Drive / VD**  
 A virtual drive is what the controller presents to the operating system as a "drive". While you can split a Drive Group up
 into more than one Virtual Drive, you'll typically want a one-to-one mapping of VD to DG. VDs are typically 0 based
-like DGs, so if you have 3 Virtual Drives, their number will likely be 0, 1, and 2.  
+like DGs, so if you have three Virtual Drives, their number will likely be 0, 1, and 2.  
 
 **Slot Number or Physical Disk / Slt or PD**  
 Each enclosure has a number of slots associated with it. Each slot is a phyical disk location where a hard drive can be
@@ -72,7 +72,10 @@ if StorCLI is compatible with your card, StorCLI will be listed as a download.
 https://www.broadcom.com/support/download-search
 ```
 
-Once downloaded onto the server, unzip the file. If you haven't installed `unzip`, you can do so with `apt-get`.  
+From the same site, be sure to download the User Guide for your card. This will include detailed information about
+both StorCLI usage as well as other management information related to your card.  
+
+Once StorCLI is downloaded onto the server, unzip the file. If you haven't installed `unzip`, you can do so with `apt-get`.  
 ```
 apt-get install unzip
 ```
@@ -147,6 +150,12 @@ and `/s2`.
 storcli64 /c0/e5/s0-2 show
 ```
 
+You can also use comma delimited lists to represent more than one of something, like `/s2,5` to mean `/s2`
+and `/s5`.  
+```
+storcli64 /c0/e5/s2,5 show
+```
+
 You can also use the `all` keyword to get the entire list of something, like `/sall` means all disk slots.  
 ```
 storcli64 /c0/e5/sall show
@@ -155,6 +164,12 @@ storcli64 /c0/e5/sall show
 
 Updating Firmware
 ---------------------------
+To view your current make and model of RAID card, you can run the following. Remember to replace the `x`
+in `/cx` with your controller number.
+```
+storcli64 /cx show | grep "^Product"
+```
+
 To view your current firmware package and version, you can run the following. Remember to replace the `x`
 in `/cx` with your controller number.  
 ```
@@ -184,7 +199,7 @@ TODO
 Silence the Alarm
 ---------------------------
 During any failure or recovery, the controller will trigger an audible alarm that will continue to sound until
-all aspects of the hardware are returned to an ideal state. The means, that even once you replace a failed
+all aspects of the hardware are returned to an ideal state. The means that even once you replace a failed
 hard drive, the alarm will continue to sound until the RAID that was degraded has fully rebuilt back to its
 original state. Obviously, this can be an annoyance.  
 
@@ -198,8 +213,21 @@ storcli64 /c0 set alarm=silence
 ```
 
 
-Set a Global Hotspare
+Set a Hotspare Drive
 ---------------------------
-TODO  
+A global hotspare drive will be used to rebuild any DG in the event of a drive failure. Once the failed
+drive has been replaced, a "copyback" operation will copy data back to the new drive from the hotspare.
+Once complete, the drive in the hotspare slot will be available as a hotspare.  
+
+To create global hotspare using StorCLI, you can use the `add hotsparedrive` command.  
+```
+storcli64 /cx/ex/sx add hotsparedrive
+```
+
+Alternatively, you can create a dedicated hotspare which will only be used for certain DGs. For example,
+if you only wanted a hotspare to be used for rebuilding DGs 2 and 3, you could set:  
+```
+storcli64 /cx/ex/sx add hotsparedrive dgs=2,3
+```
 
 
