@@ -8,7 +8,8 @@ Table of Contents
 * [Installation](#installation)
 * [Basic Usage](#basic-usage)
 * [Updating Firmware](#updating-firmware)
-* [Monitoring and Notifications](#monitoring-and-notifications)
+* [Monitoring](#monitoring)
+* [Email Notification](#email-notification)
 * [Silence the Alarm](#silence-the-alarm)
 * [Set a Hotspare Drive](#set-a-hotspare-drive)
 
@@ -161,6 +162,8 @@ You can also use the `all` keyword to get the entire list of something, like `/s
 storcli64 /c0/e5/sall show
 ```
 
+Most StorCLI commands do not ask for confirmation, so be certain of what command you are entering.  
+
 
 Updating Firmware
 ---------------------------
@@ -191,7 +194,12 @@ storcli64 /c0 download file=mr3108fw.rom
 ```
 
 
-Monitoring and Notifications
+Monitoring
+---------------------------
+TODO  
+
+
+Email Notification
 ---------------------------
 TODO  
 
