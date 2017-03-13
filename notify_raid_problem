@@ -167,7 +167,7 @@ if [[ $PROBLEM_STATE_FOUND -eq 0 ]]; then
     HOSTNAMES=( $( hostname -A ) $HOSTNAME localhost )
     TO="root@localhost"
     FROM="root@${HOSTNAMES[0]}"
-    SUBJECT="WARNING: Hardware RAID Problem detected on $HOSTNAME"
+    SUBJECT="WARNING: Hardware RAID problem detected on $HOSTNAME"
     MESSAGE="""
 A non-optimal RAID state was detected on: $HOSTNAME
 Server IP address(es): $( hostname -I )
