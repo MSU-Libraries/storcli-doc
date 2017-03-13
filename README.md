@@ -201,7 +201,23 @@ TODO
 
 Email Notification
 ---------------------------
-TODO  
+Provide along with this documentaion is a script named `notify_raid_problem`. This is a simple
+Bash script that will send out an email to `root@localhost` in case of a degraded VD or PD.  
+
+Set the script to run periodically, at least once a day, via cron. In the example below, the script
+is placed in `/usr/local/sbin/` and set to run twice a day, at 4:30am and 4:30pm.  
+```
+# Hardware RAID problem notification
+30 4,16 * * *   root    /usr/local/sbin/notify_raid_problem
+```
+
+By default, the script will run on controller `0`. If you have a specific controller you wish to check,
+then specify the controller number to the script.  
+```
+# Hardware RAID problem notifications for controller 1 and 2
+30 4    * * *   root    /usr/local/sbin/notify_raid_problem 1
+30 16   * * *   root    /usr/local/sbin/notify_raid_problem 2
+```
 
 
 Silence the Alarm
