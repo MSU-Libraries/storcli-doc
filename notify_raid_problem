@@ -98,7 +98,7 @@ while read -r LINE; do
     fi
 
     # Try to parse VD from output only if the header was found
-    if [[ $VD_MATCHHEADER -eq 0 && $LINE =~ $VD_HEADER_RE ]]; then
+    if [[ $VD_MATCHHEADER -eq 0 && $LINE =~ $VD_ENTRY_RE ]]; then
         if ! array_contains_value ALLOWED_VD_STATES ${BASH_REMATCH[3]}; then
             PROBLEM_STATE_FOUND=0
             break
@@ -135,7 +135,7 @@ while read -r LINE; do
     fi
 
     # Try to parse PD from output only if the header was found
-    if [[ $PD_MATCHHEADER -eq 0 && $LINE =~ $PD_HEADER_RE ]]; then
+    if [[ $PD_MATCHHEADER -eq 0 && $LINE =~ $PD_ENTRY_RE ]]; then
         if ! array_contains_value ALLOWED_PD_STATES ${BASH_REMATCH[3]}; then
             PROBLEM_STATE_FOUND=0
             break
