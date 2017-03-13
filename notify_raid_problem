@@ -69,9 +69,10 @@ array_contains_value() {
 }
 
 # Regular Expression shorthand
-RSR="[[:space:]]+"              # Regex Space Required
-RSO="[[:space:]]*"              # Regex Space Optional
-RGR="([[:graph:]]+)"            # Regex Graph Required
+RSR="[[:space:]]+"                              # Regex Space Required
+RSO="[[:space:]]*"                              # Regex Space Optional
+RGR="([[:graph:]]+)"                            # Regex Graph Required
+RZR="([[:graph:]]+[[:space:]][[:alpha:]]{2})"   # Regex Size Required (e.g. 45.6 TB)
 
 ###########################################################
 # Virtual Disks
@@ -87,7 +88,7 @@ if [[ $VD_EXIT -ne 0 ]]; then
     exit 1
 fi
 VD_HEADER_RE="^DG/VD${RSR}TYPE${RSR}State${RSR}Access${RSR}Consist${RSR}Cache${RSR}Cac${RSR}sCC${RSR}Size${RSR}Name${RSO}$"
-VD_ENTRY_RE="^$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSO$"
+VD_ENTRY_RE="^$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RZR$RSR$RGR$RSO$"
 VD_MATCHHEADER=1
 while read -r LINE; do
     # Ensure we match the header before processing results
@@ -114,31 +115,73 @@ fi
 # Physical Disks
 
 # Show all physical disks on controller
-PD_OUTPUT=$( ${STORCLI_PATH} /c${CID}/eall/sall show )
+PD_COMMAND="${STORCLI_PATH} /c${CID}/eall/sall show"
+PD_OUTPUT=$( $PD_COMMAND )
 PD_EXIT=$?
 
 # Ensure command ran successfully with expected output
-# TODO match list header
+if [[ $PD_EXIT -ne 0 ]]; then
+    echo "ERROR: Command exited with code $PD_EXIT: $PD_COMMAND"
+    exit 1
+fi
+PD_HEADER_RE="^EID:Slt${RSR}DID${RSR}State${RSR}DG${RSR}Size${RSR}Intf${RSR}Med${RSR}SED${RSR}PI${RSR}SeSz${RSR}Model${RSR}Sp${RSR}Type${RSO}$"
+PD_ENTRY_RE="^$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RZR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSO$"
+PD_MATCHHEADER=1
+while read -r LINE; do
+    # Ensure we match the header before processing results
+    if [[ $LINE =~ $PD_HEADER_RE ]]; then
+        PD_MATCHHEADER=0
+        continue
+    fi
 
-# Parse line to match PD
-# TODO
-
-# EID:Slt DID State DG     Size Intf Med SED PI SeSz Model                Sp Type
-# 4:0       6 Onln   0 931.0 GB SATA HDD N   N  512B ST1000NM0033-9ZM173  U  -
-# 4:1       7 Onln   0 931.0 GB SATA HDD N   N  512B ST1000NM0033-9ZM173  U  -
-# 4:2      32 Onln   1 9.094 TB SATA HDD N   N  512B ST10000VN0004-1ZD101 U  -
-# 5:10     20 Onln   3 9.094 TB SATA HDD N   N  512B ST10000VN0004-1ZD101 U  -
-# 5:11     28 GHS    - 9.094 TB SATA HDD N   N  512B ST10000VN0004-1ZD101 D  -
-# D-Enclosure Device ID|Slt-Slot No.|DID-Device ID|DG-DriveGroup
-# DHS-Dedicated Hot Spare|UGood-Unconfigured Good|GHS-Global Hotspare
-# UBad-Unconfigured Bad|Onln-Online|Offln-Offline|Intf-Interface
-# Med-Media Type|SED-Self Encryptive Drive|PI-Protection Info
-# SeSz-Sector Size|Sp-Spun|U-Up|D-Down|T-Transition|F-Foreign
-# UGUnsp-Unsupported|UGShld-UnConfigured shielded|HSPShld-Hotspare shielded
-# CFShld-Configured shielded|Cpybck-CopyBack|CBShld-Copyback Shielded
+    # Try to parse PD from output only if the header was found
+    if [[ $PD_MATCHHEADER -eq 0 && $LINE =~ $PD_HEADER_RE ]]; then
+        if ! array_contains_value ALLOWED_PD_STATES ${BASH_REMATCH[3]}; then
+            PROBLEM_STATE_FOUND=0
+            break
+        fi
+    fi
+done <<< "$PD_OUTPUT"
+# Exit with error if no header was matched
+if [[ $PD_MATCHHEADER -ne 0 ]]; then
+    echo "ERROR: Command did not output a valid header: $PD_COMMAND"
+    exit 1
+fi
 
 ###########################################################
 # Send Notification (if problem state found)
 
-#TODO
+# Email function
+# Usage: email "from@example.com" "to@example.com" "Subject" "Message line 1\nMessage line 2"
+email() {
+    EMAIL_FROM="$1"
+    EMAIL_TO="$2"
+    EMAIL_SUBJECT="$3"
+    EMAIL_MESSAGE="$4"
+    EMAIL_HEADERS=$( printf 'From: %s\nTo: %s\nSubject: %s\n' "$EMAIL_FROM" "$EMAIL_TO" "$EMAIL_SUBJECT" )
+    printf '%s\n%b\n' "$EMAIL_HEADERS" "$EMAIL_MESSAGE" | $( which sendmail ) -t
+}
+
+# Only send notification if a problem was found
+if [[ $PROBLEM_STATE_FOUND -eq 0 ]]; then
+    HOSTNAMES=( $( hostname -A ) $HOSTNAME localhost )
+    TO="root@localhost"
+    FROM="root@${HOSTNAMES[0]}"
+    SUBJECT="WARNING: Hardware RAID Problem detected on $HOSTNAME"
+    MESSAGE="""
+A non-optimal RAID state was detected on: $HOSTNAME
+Server IP address(es): $( hostname -I )
+
+Virtual Disk check command: $VD_COMMAND
+============================================================
+$( printf "%s\n"  "${VD_OUTPUT[@]}" )
+
+
+Physical Disk check command: $PD_COMMAND
+============================================================
+$( printf "%s\n"  "${PD_OUTPUT[@]}" )
+"""
+
+    email "$FROM" "$TO" "$SUBJECT" "$MESSAGE"
+fi
 
