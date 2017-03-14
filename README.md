@@ -201,7 +201,7 @@ TODO
 
 Email Notification
 ---------------------------
-Provide along with this documentaion is a script named `notify_raid_problem`. This is a simple
+Provided along with this documentaion is a script named `notify_raid_problem`. This is a simple
 Bash script that will send out an email to `root@localhost` in case of a degraded VD or PD.  
 
 Set the script to run periodically, at least once a day, via cron. In the example below, the script
@@ -234,6 +234,14 @@ remember to re-enable it later. As a general rule, do not disable and alarm, jus
 To silence the alarm for controller `0`, you can run:  
 ```
 storcli64 /c0 set alarm=silence
+```
+
+Provided along with this documentaion is a script named `silence_raid_alarm`. This script merely calls
+the above command. By default, the script will run on controller `0`. If you have a specific controller you
+wish to check, then specify the controller number to the script.  
+```
+silence_raid_alarm
+silence_raid_alarm 2
 ```
 
 
