@@ -13,6 +13,7 @@ Table of Contents
 * [Silence the Alarm](#silence-the-alarm)
 * [Set a Hotspare Drive](#set-a-hotspare-drive)
 * [Clear Foreign Configurations](#clear-foreign-configurations)
+* [Other Useful Commands](#other-useful-commands)
 
 
 Introduction
@@ -280,4 +281,13 @@ storcli64 /cx/fall del
 ```
 
 After which, you should be able to assign the drive(s) as normal unconfigured disks.  
+
+
+Other Useful Commands
+---------------------------
+To view the status of current RAID rebuild jobs:  
+```
+storcli64 /cx/eall/sall show rebuild
+```
+
 
