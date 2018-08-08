@@ -12,6 +12,7 @@ Table of Contents
 * [Email Notification](#email-notification)
 * [Silence the Alarm](#silence-the-alarm)
 * [Set a Hotspare Drive](#set-a-hotspare-drive)
+* [Clear Foreign Configurations](#clear-foreign-configurations)
 
 
 Introduction
@@ -262,4 +263,21 @@ if you only wanted a hotspare to be used for rebuilding DGs 2 and 3, you could s
 storcli64 /cx/ex/sx add hotsparedrive dgs=2,3
 ```
 
+
+Clear Foreign Configurations
+---------------------------
+If you re-use a drive for a different purpose, the previous RAID configuration will still exist on the drive
+itself. The RAID card will detect this and refuse to use the drive in question, to protect the data on the drive
+in case a mistake happened, or if your intention is to rebuild a RAID after moving disks from a different server.  
+
+However, if you are actually intending to re-purpose a drive, it will be marked as "F" as the DG, meaning the
+drive config is foreign. To be able to use the disk again, you will need to clear that foreign config.  
+
+The `storcli` command can clear ALL foreign drive configs with the following command. This will not affect your drives
+that have a numeric DG already. To clear the foreign configs from any drives with the "F" DG:  
+```
+storcli64 /cx/fall del
+```
+
+After which, you should be able to assign the drive(s) as normal unconfigured disks.  
 
