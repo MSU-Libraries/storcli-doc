@@ -120,7 +120,7 @@ PD_OUTPUT=$( $PD_COMMAND )
 PD_EXIT=$?
 
 # Ensure command ran successfully with expected output
-if [[ $PD_EXIT -ne 0 ]]; then
+if [[ $PD_EXIT -ne 0 && $PD_EXIT -ne 46 ]]; then
     echo "ERROR: Command exited with code $PD_EXIT: $PD_COMMAND"
     exit 1
 fi
