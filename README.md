@@ -290,4 +290,9 @@ To view the status of current RAID rebuild jobs:
 storcli64 /cx/eall/sall show rebuild
 ```
 
+To view the status of current copyback jobs:
+```
+storcli64 /cx/eall/sall show copyback
+```
+
 
