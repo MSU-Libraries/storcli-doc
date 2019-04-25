@@ -264,6 +264,8 @@ if you only wanted a hotspare to be used for rebuilding DGs 2 and 3, you could s
 storcli64 /cx/ex/sx add hotsparedrive dgs=2,3
 ```
 
+Note that after a hot spare drive has been used and then the data copyback has happened on a replced drive, the former hot spare may contain a foreign configuration that may need to be cleared.  
+
 
 Clear Foreign Configurations
 ---------------------------
