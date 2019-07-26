@@ -18,6 +18,11 @@ fi
 # Desired states enumerated
 ALLOWED_VD_STATES=(optl)
 ALLOWED_PD_STATES=(onln ugood ghs dhs)
+# Default subject message for alerts
+MAIL_SUBJECT="WARNING: Hardware RAID problem detected on $HOSTNAME"
+# Additional notes to add to alert email
+MAIL_NOTES=""
+
 # Flag to set if problem state is found (default to false)
 PROBLEM_STATE_FOUND=1
 
@@ -100,8 +105,10 @@ while read -r LINE; do
     # Try to parse VD from output only if the header was found
     if [[ $VD_MATCHHEADER -eq 0 && $LINE =~ $VD_ENTRY_RE ]]; then
         if ! array_contains_value ALLOWED_VD_STATES ${BASH_REMATCH[3]}; then
+            MAIL_NOTES+="""
+Non-optimal virtual drive state (${BASH_REMATCH[3]}) detected for: ${BASH_REMATCH[1]}
+"""
             PROBLEM_STATE_FOUND=0
-            break
         fi
     fi
 done <<< "$VD_OUTPUT"
@@ -136,8 +143,25 @@ while read -r LINE; do
 
     # Try to parse PD from output only if the header was found
     if [[ $PD_MATCHHEADER -eq 0 && $LINE =~ $PD_ENTRY_RE ]]; then
+        # Validate PD states are only those allowed
         if ! array_contains_value ALLOWED_PD_STATES ${BASH_REMATCH[3]}; then
             PROBLEM_STATE_FOUND=0
+            MAIL_NOTES+="""
+Non-optimal physical drive state (${BASH_REMATCH[3]}) detected for: ${BASH_REMATCH[1]}
+"""
+        fi
+
+        # If a foreign drive is configured, send an alert (might just be a GHS that has been used and copied back)
+        if [[ ${BASH_REMATCH[4]} == "F" ]]; then
+            PROBLEM_STATE_FOUND=0
+            MAIL_SUBJECT="WARNING: Foreign drive group detected in RAID card on $HOSTNAME"
+            MAIL_NOTES+="""
+A foreign drive group is a drive that has previously been part of a
+RAID configuration. One way this can occur is if a hot spare drive
+was used. After the copyback, it may retain the temporary DG config
+it was part of. In that case, the foreign DG must be cleared and the
+drive set as a hot spare once again. See documentation for details.
+"""
             break
         fi
     fi
@@ -167,8 +191,8 @@ if [[ $PROBLEM_STATE_FOUND -eq 0 ]]; then
     HOSTNAMES=( $( hostname -A ) $HOSTNAME localhost )
     TO="root@localhost"
     FROM="root@${HOSTNAMES[0]}"
-    SUBJECT="WARNING: Hardware RAID problem detected on $HOSTNAME"
-    MESSAGE="""
+    SUBJECT="${MAIL_SUBJECT}"
+    MESSAGE="""$MAIL_NOTES
 A non-optimal RAID state was detected on: $HOSTNAME
 Server IP address(es): $( hostname -I )
 
