@@ -7,13 +7,43 @@
 # sent to the root user of the server.
 ###########################################################
 
+# Loop through arguments to grab flags
+while test $# -gt 0; do
+  case "$1" in
+    -h|--help)
+      echo "notify_raid_problem - Send out an alert if the RAID is unhappy"
+      echo "Usage:"
+      echo "  ./notify_raid_problem [FLAGS] [CTRLR_ID]"
+      echo
+      echo "CTRLR_ID:       The integer id of the controler; defaults of 0"
+      echo "FLAGS:"
+      echo " -h,--help      Show this message"
+      echo " -g,--ghs       If Global Hot Spare missing, then send alert"
+      exit 0
+      ;;
+    -g|--ghs)
+      REQUIRE_GHS=0
+      shift
+      ;;
+    [[:digit:]]*)
+      CID=${1}
+      shift
+      ;;
+    *)
+      echo "Unknown argument: ${1}"
+      exit 1
+      ;;
+  esac
+done
+
 # Default to controller 0
-CID=${1:-0}
+CID=${CID:-0}
 # Only allow controller id to be 0 through 9
 if [[ ! $CID =~ ^[0-9]$ ]]; then
     echo "ERROR: Controller number out of bounds."
     exit 1
 fi
+REQUIRE_GHS=${REQUIRE_GHS:-1}
 
 # Desired states enumerated
 ALLOWED_VD_STATES=(optl)
@@ -134,6 +164,7 @@ fi
 PD_HEADER_RE="^EID:Slt${RSR}DID${RSR}State${RSR}DG${RSR}Size${RSR}Intf${RSR}Med${RSR}SED${RSR}PI${RSR}SeSz${RSR}Model${RSR}Sp${RSR}Type${RSO}$"
 PD_ENTRY_RE="^$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RZR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSO$"
 PD_MATCHHEADER=1
+PD_FOUND_GHS=1
 while read -r LINE; do
     # Ensure we match the header before processing results
     if [[ $LINE =~ $PD_HEADER_RE ]]; then
@@ -143,6 +174,10 @@ while read -r LINE; do
 
     # Try to parse PD from output only if the header was found
     if [[ $PD_MATCHHEADER -eq 0 && $LINE =~ $PD_ENTRY_RE ]]; then
+        # Record if GHS was found
+        if [[ "${BASH_REMATCH[3]}" == "ghs" ]]; then
+            PD_FOUND_GHS=0
+        fi
         # Validate PD states are only those allowed
         if ! array_contains_value ALLOWED_PD_STATES ${BASH_REMATCH[3]}; then
             PROBLEM_STATE_FOUND=0
@@ -157,10 +192,8 @@ Non-optimal physical drive state (${BASH_REMATCH[3]}) detected for: ${BASH_REMAT
             MAIL_SUBJECT="WARNING: Foreign drive group detected in RAID card on $HOSTNAME"
             MAIL_NOTES+="""
 A foreign drive group is a drive that has previously been part of a
-RAID configuration. One way this can occur is if a hot spare drive
-was used. After the copyback, it may retain the temporary DG config
-it was part of. In that case, the foreign DG must be cleared and the
-drive set as a hot spare once again. See documentation for details.
+RAID configuration. To reuse drives, any foreign configs must first
+be cleared. See documentation for details.
 """
             break
         fi
@@ -170,6 +203,14 @@ done <<< "$PD_OUTPUT"
 if [[ $PD_MATCHHEADER -ne 0 ]]; then
     echo "ERROR: Command did not output a valid header: $PD_COMMAND"
     exit 1
+fi
+
+# If the GHS flag was set, send alert when one doesn't exist
+if [[ $REQUIRE_GHS -eq 0 && $PD_FOUND_GHS -ne 0 ]]; then
+    MAIL_NOTES+="""
+No Global Hot Spare drive was found though the command flag requiring one be present was passed.
+"""
+    PROBLEM_STATE_FOUND=0
 fi
 
 ###########################################################
