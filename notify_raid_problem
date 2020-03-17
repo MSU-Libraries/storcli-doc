@@ -103,6 +103,22 @@ array_contains_value() {
     return 1
 }
 
+#############################################
+# Get progress of either all copyback or rebuild jobs
+#  $1 => (string) copyback or rebuild
+# Outputs the appropriate printable results
+ALLOWED_PROGRESS_JOBS=(copyback rebuild)
+job_progress() {
+    JOB_TYPE="$1"
+    if ! array_contains_value ALLOWED_PROGRESS_JOBS ${JOB_TYPE}; then
+        echo "Invalid job progress request: ${JOB_TYPE}"
+        exit 1
+    fi
+    JOB_COMMAND="${STORCLI_PATH} /c${CID}/eall/sall show ${JOB_TYPE} | grep '/c0\|Drive-ID' | grep -v 'Not in progress'"
+    $JOB_COMMAND
+    return $?
+}
+
 # Regular Expression shorthand
 RSR="[[:space:]]+"                              # Regex Space Required
 RSO="[[:space:]]*"                              # Regex Space Optional
@@ -165,6 +181,8 @@ PD_HEADER_RE="^EID:Slt${RSR}DID${RSR}State${RSR}DG${RSR}Size${RSR}Intf${RSR}Med$
 PD_ENTRY_RE="^$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RZR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSO$"
 PD_MATCHHEADER=1
 PD_FOUND_GHS=1
+PD_FOUND_REBUILD=1
+PD_FOUND_COPYBACK=1
 while read -r LINE; do
     # Ensure we match the header before processing results
     if [[ $LINE =~ $PD_HEADER_RE ]]; then
@@ -174,9 +192,15 @@ while read -r LINE; do
 
     # Try to parse PD from output only if the header was found
     if [[ $PD_MATCHHEADER -eq 0 && $LINE =~ $PD_ENTRY_RE ]]; then
-        # Record if GHS was found
-        if [[ "${BASH_REMATCH[3]}" == "ghs" ]]; then
+        # Record if specific PD states are found
+        if [[ "${BASH_REMATCH[3],,}" == "ghs" ]]; then
             PD_FOUND_GHS=0
+        fi
+        if [[ "${BASH_REMATCH[3],,}" == "rbld" ]]; then
+            PD_FOUND_REBUILD=0
+        fi
+        if [[ "${BASH_REMATCH[3],,}" == "cpybck" ]]; then
+            PD_FOUND_COPYBACK=0
         fi
         # Validate PD states are only those allowed
         if ! array_contains_value ALLOWED_PD_STATES ${BASH_REMATCH[3]}; then
@@ -209,6 +233,26 @@ fi
 if [[ $REQUIRE_GHS -eq 0 && $PD_FOUND_GHS -ne 0 ]]; then
     MAIL_NOTES+="""
 No Global Hot Spare drive was found though the command flag requiring one be present was passed.
+"""
+    PROBLEM_STATE_FOUND=0
+fi
+
+# Include progress of rebuild jobs
+if [[ $PD_FOUND_REBUILD -eq 0 ]]; then
+    PROGRESS_OUT=$( job_progress rebuild )
+    MAIL_NOTES+="""
+RAID REBUILD JOBS:
+${PROGRESS_OUT}
+"""
+    PROBLEM_STATE_FOUND=0
+fi
+
+# Include progress of copyback jobs
+if [[ $PD_FOUND_COPYBACK -eq 0 ]]; then
+    PROGRESS_OUT=$( job_progress copyback )
+    MAIL_NOTES+="""
+RAID COPYBACK JOBS:
+${PROGRESS_OUT}
 """
     PROBLEM_STATE_FOUND=0
 fi
