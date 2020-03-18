@@ -114,9 +114,7 @@ job_progress() {
         echo "Invalid job progress request: ${JOB_TYPE}"
         exit 1
     fi
-    JOB_COMMAND="${STORCLI_PATH} /c${CID}/eall/sall show ${JOB_TYPE} | grep '/c0\|Drive-ID' | grep -v 'Not in progress'"
-    $JOB_COMMAND
-    return $?
+    ${STORCLI_PATH} /c${CID}/eall/sall show ${JOB_TYPE} | grep '/c0\|Drive-ID' | grep -v 'Not in progress'
 }
 
 # Regular Expression shorthand
