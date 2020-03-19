@@ -19,6 +19,8 @@ while test $# -gt 0; do
       echo "FLAGS:"
       echo " -h,--help      Show this message"
       echo " -g,--ghs       If Global Hot Spare missing, then send alert"
+      echo " -e EMAIL       Where to send warning emails (default: root@localhost)"
+      echo " -p,--print     Print output even if no issues detected; does not send email"
       exit 0
       ;;
     -g|--ghs)
@@ -29,6 +31,15 @@ while test $# -gt 0; do
       CID=${1}
       shift
       ;;
+    -p|--print)
+      PRINT_RESULTS=0
+      shift
+      ;;
+    -e)
+      shift
+      EMAIL_TARGET="${1}"
+      shift
+      ;;
     *)
       echo "Unknown argument: ${1}"
       exit 1
@@ -36,7 +47,9 @@ while test $# -gt 0; do
   esac
 done
 
-# Default to controller 0
+# Set Defaults
+EMAIL_TARGET=${EMAIL_TARGET:-root@localhost}
+PRINT_RESULTS=${PRINT_RESULTS:-1}
 CID=${CID:-0}
 # Only allow controller id to be 0 through 9
 if [[ ! $CID =~ ^[0-9]$ ]]; then
@@ -255,6 +268,29 @@ ${PROGRESS_OUT}
     PROBLEM_STATE_FOUND=0
 fi
 
+if [[ $PROBLEM_STATE_FOUND -eq 0 ]]; then
+    MAIL_NOTES+="""
+A non-optimal RAID state was detected on: $HOSTNAME
+"""
+else
+    MAIL_NOTES+="""
+No issues were detected for RAID state on: $HOSTNAME
+"""
+fi
+
+MAIL_NOTES+="""
+Server IP address(es): $( hostname -I )
+
+Virtual Disk check command: $VD_COMMAND
+============================================================
+$( printf "%s\n"  "${VD_OUTPUT[@]}" )
+
+
+Physical Disk check command: $PD_COMMAND
+============================================================
+$( printf "%s\n"  "${PD_OUTPUT[@]}" )
+"""
+
 ###########################################################
 # Send Notification (if problem state found)
 
@@ -270,25 +306,13 @@ email() {
 }
 
 # Only send notification if a problem was found
-if [[ $PROBLEM_STATE_FOUND -eq 0 ]]; then
+if [[ $PRINT_RESULTS -eq 0 ]]; then
+    echo "$MAIL_NOTES"
+elif [[ $PROBLEM_STATE_FOUND -eq 0 ]]; then
     HOSTNAMES=( $( hostname -A ) $HOSTNAME localhost )
-    TO="root@localhost"
+    TO="${EMAIL_TARGET}"
     FROM="root@${HOSTNAMES[0]}"
     SUBJECT="${MAIL_SUBJECT}"
-    MESSAGE="""$MAIL_NOTES
-A non-optimal RAID state was detected on: $HOSTNAME
-Server IP address(es): $( hostname -I )
-
-Virtual Disk check command: $VD_COMMAND
-============================================================
-$( printf "%s\n"  "${VD_OUTPUT[@]}" )
-
-
-Physical Disk check command: $PD_COMMAND
-============================================================
-$( printf "%s\n"  "${PD_OUTPUT[@]}" )
-"""
-
-    email "$FROM" "$TO" "$SUBJECT" "$MESSAGE"
+    email "$FROM" "$TO" "$SUBJECT" "$MAIL_NOTES"
 fi
 
