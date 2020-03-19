@@ -134,6 +134,8 @@ job_progress() {
 RSR="[[:space:]]+"                              # Regex Space Required
 RSO="[[:space:]]*"                              # Regex Space Optional
 RGR="([[:graph:]]+)"                            # Regex Graph Required
+RGO="([[:graph:]]*)"                            # Regex Graph Optional
+ANY="(.+)"                                      # Regex Any Characters Required
 RZR="([[:graph:]]+[[:space:]][[:alpha:]]{2})"   # Regex Size Required (e.g. 45.6 TB)
 
 ###########################################################
@@ -150,7 +152,7 @@ if [[ $VD_EXIT -ne 0 && $VD_EXIT -ne 46 ]]; then
     exit 1
 fi
 VD_HEADER_RE="^DG/VD${RSR}TYPE${RSR}State${RSR}Access${RSR}Consist${RSR}Cache${RSR}Cac${RSR}sCC${RSR}Size${RSR}Name${RSO}$"
-VD_ENTRY_RE="^$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RZR$RSR$RGR$RSO$"
+VD_ENTRY_RE="^$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RZR$RSO$RGO$RSO$"
 VD_MATCHHEADER=1
 while read -r LINE; do
     # Ensure we match the header before processing results
@@ -158,7 +160,6 @@ while read -r LINE; do
         VD_MATCHHEADER=0
         continue
     fi
-
     # Try to parse VD from output only if the header was found
     if [[ $VD_MATCHHEADER -eq 0 && $LINE =~ $VD_ENTRY_RE ]]; then
         if ! array_contains_value ALLOWED_VD_STATES ${BASH_REMATCH[3]}; then
@@ -189,7 +190,7 @@ if [[ $PD_EXIT -ne 0 && $PD_EXIT -ne 46 ]]; then
     exit 1
 fi
 PD_HEADER_RE="^EID:Slt${RSR}DID${RSR}State${RSR}DG${RSR}Size${RSR}Intf${RSR}Med${RSR}SED${RSR}PI${RSR}SeSz${RSR}Model${RSR}Sp${RSR}Type${RSO}$"
-PD_ENTRY_RE="^$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RZR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSO$"
+PD_ENTRY_RE="^$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RZR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$RGR$RSR$ANY$RSR$RGR$RSR$RGR$RSO$"
 PD_MATCHHEADER=1
 PD_FOUND_GHS=1
 PD_FOUND_REBUILD=1
@@ -252,7 +253,7 @@ fi
 if [[ $PD_FOUND_REBUILD -eq 0 ]]; then
     PROGRESS_OUT=$( job_progress rebuild )
     MAIL_NOTES+="""
-RAID REBUILD JOBS:
+RAID rebuild jobs:
 ${PROGRESS_OUT}
 """
     PROBLEM_STATE_FOUND=0
@@ -262,7 +263,7 @@ fi
 if [[ $PD_FOUND_COPYBACK -eq 0 ]]; then
     PROGRESS_OUT=$( job_progress copyback )
     MAIL_NOTES+="""
-RAID COPYBACK JOBS:
+RAID copyback jobs:
 ${PROGRESS_OUT}
 """
     PROBLEM_STATE_FOUND=0
