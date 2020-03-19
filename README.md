@@ -221,6 +221,12 @@ then specify the controller number to the script.
 30 16   * * *   root    /usr/local/sbin/notify_raid_problem 2
 ```
 
+Additional flags for `notify_raid_problem` are:  
+* `-h` Show help
+* `-g` Send alert email if no Global Hot Spare drive is detected
+* `-p` Print the results of the check to the terminal, even if no issues were detected
+* `-e addr@example.com` Override where the email alerts are sent (default is `root@localhost`)
+
 
 Silence the Alarm
 ---------------------------
