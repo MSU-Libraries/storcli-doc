@@ -12,9 +12,9 @@ if [[ ! $CID =~ ^[0-9]$ ]]; then
 fi
 
 # Possible names of StorCLI binary
-STORCLI_BINARIES=( "storcli64" "storcli" )
+STORCLI_BINARIES=( "storcli64" "storcli" "perccli64" "perccli" )
 # If StorCLI binary is not found in path, try these locations also
-EXTRA_SEARCH_PATHS=( "/opt/MegaRAID/storcli/" "/usr/local/sbin/" "/usr/local/bin/" )
+EXTRA_SEARCH_PATHS=( "/opt/MegaRAID/storcli/" "/usr/local/sbin/" "/usr/local/bin/" "/opt/MegaRAID/perccli/" )
 
 # StorCLI path
 locate_storcli() {

@@ -20,6 +20,8 @@ Introduction
 ---------------------------
 StorCLI is a utility to monitor and manage LSI/Avago hardware RAID cards.  
 
+Dell PERC RAID controllers are mostly based on the same chipsets, thus the below can also work with PERC cards, although they require PERCCLI from Dell (which is just a rebranded version of StorCLI).  
+
 For the purposes of this documentation, we will assume you are working on an
 Ubuntu 16.04 based server. If you are using a different distribution, your steps
 may differ from below. Unless otherwise stated, all commands should be run with
@@ -68,6 +70,7 @@ hard drive.
 
 Installation
 ---------------------------
+**For LSI/Avago/Broadcom branded cards (for Dell, see further down)**  
 As StorCLI is proprietary, you will need to download the application from the official website. As of the
 writing of this document, that would be Broadcom's site. You will need to search for your model of card, and
 if StorCLI is compatible with your card, StorCLI will be listed as a download.  
@@ -123,6 +126,38 @@ ln -s /opt/MegaRAID/storcli/storcli64 /usr/local/sbin/
 
 With the link created, you can just call `storcli64` from the command line from now on. For example, the
 following should now work.  
+```
+storcli64 show
+```
+
+**For Dell PERC branded cards**  
+Dell's hardware based PERC cards are based on the same chipsets, but require you download PERCCLI instead of StorCLI. You
+will want to download the latest "PERCLI Utility" for Linux from Dell's support site. Download and extract the contents.  
+```
+tar -xzvf Perccli_7.1020.0000_Linux.tar.gz
+```
+
+The downloaded file wil only contain a RPM package. For Ubuntu/Debian, use `alien` to create a `.deb` package.  
+```
+# Install alien if not already installed
+sudo apt install alien
+
+# Convert RPM to DEB (run with root privileges)
+sudo alien perccli-007.1020.0000.0000-1.noarch.rpm
+```
+
+Copy the pacakge to the appropriate server and install it:  
+```
+sudo dpkg -i perccli_007.1020.0000.0000-2_all.deb
+```
+
+The default location PERCCLI installs is `/opt/MegaRAID/perccli/`. For consistency sake, we can link this like a `storcli64`
+binary:  
+```
+ln -s /opt/MegaRAID/perccli/perccli64 /usr/local/sbin/storcli64
+```
+
+With the link created, calling `storcli64` from the command line will work just like normal StorCLI.  
 ```
 storcli64 show
 ```
