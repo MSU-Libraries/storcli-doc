@@ -307,6 +307,8 @@ storcli64 /cx/ex/sx add hotsparedrive dgs=2,3
 
 Note that after a hot spare drive has been used and then the data copyback has happened on a replced drive, the former hot spare may contain a foreign configuration that may need to be cleared.  
 
+If a drive has been configured outside a RAID at some point, it might be listed as `JBOD`. If you are certain a new drive is intended to be used for rebuilding or as a hot spare, see the "Other Useful Commands" section for how to clear a `JBOD` status.  
+
 
 Clear Foreign Configurations
 ---------------------------
@@ -328,6 +330,13 @@ After which, you should be able to assign the drive(s) as normal unconfigured di
 
 Other Useful Commands
 ---------------------------
+To clear the `JBOD` status of a disk inserted to replace a drive, you can force it to reset to an unconfigured good drive. 
+Note, this command should only be used on a drive you know is blank or that you are okay to have overwritten.  
+```
+# Use an appropriate 'show' command first to determine the controller, enclosure, and drive slot.
+storcli64 /cx/ex/sx set good force
+```
+
 To view the status of current RAID rebuild jobs:  
 ```
 storcli64 /cx/eall/sall show rebuild
