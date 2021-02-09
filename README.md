@@ -8,6 +8,7 @@ Table of Contents
 * [Installation](#installation)
 * [Basic Usage](#basic-usage)
 * [Updating Firmware](#updating-firmware)
+* [Consistency Check Impact](#consistency-check-impact)
 * [Monitoring](#monitoring)
 * [Email Notification](#email-notification)
 * [Silence the Alarm](#silence-the-alarm)
@@ -230,6 +231,28 @@ To update the firmware for controller `0` using rom file `mr3108fw.rom`:
 storcli64 /c0 download file=mr3108fw.rom
 ```
 
+Consistency Check Impact
+---------------------------
+By default, the RAID controller will perform a concurrent (that is, all disks at once) data consistency check every
+168 hours (7 days). This check is set to allow performance impact of 30% while it is running, also by default.  
+
+This consistency check (CC) be disabled, but it is not recommended unless any performance impact is unacceptable.  
+```
+storcli64 /cx set cc=off
+```
+
+Rather than disabling CC, you can lower the impact it has by:  
+ * Less frequent checks
+ * Checking only one disk at a time instead of all of them
+ * Lower the rate at which it performs its check
+
+To change the frequency of checks and their concurrency vs sequential nature of disk scanning:  
+```
+# Set the CC to scan disks sequentially every 30 days
+storcli64 /cx set cc=seq delay=720
+# Set the CC to scan disks concurrently every 7 days (the default)
+storcli64 /cx set cc=conc delay=168
+```
 
 Monitoring
 ---------------------------
