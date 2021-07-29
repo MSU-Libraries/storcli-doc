@@ -15,6 +15,7 @@ Table of Contents
 * [Set a Hotspare Drive](#set-a-hotspare-drive)
 * [Clear Foreign Configurations](#clear-foreign-configurations)
 * [Other Useful Commands](#other-useful-commands)
+* [Implementation Notes](#implementation-notes)
 
 
 Introduction
@@ -370,4 +371,16 @@ To view the status of current copyback jobs:
 storcli64 /cx/eall/sall show copyback
 ```
 
+Implementation Notes
+----------------------------
+Accessing RAID physical disks is done by Controller/Enclosure/Slot. We only have one RAID controller in our servers and controllers always start with 0.
 
+However, you can have multiple enclosures, such as `vault-glfs0a` which is a 36 drive server which has two enclosures, a 24 bay one the front and a 12 bay one on the rear. However, enclosure numbering does not start at zerio. For example in `vault-glfs0a`, the front bay is enclosure 4 and the rear one is enclosure 5.
+
+Within each enclosure, the bay slots always start at 0. For example, in `vault-glfs0a` the front one has slots 0 - 23 and the rear has 0 - 12.
+
+So for the purposes of the storcli reports, referencing `/c0/e5/s9` on `vault-glfs0a` translates to: controller 0, enclosure 5 (rear in this case),  slot 9 (which is the 10th bay on the rear).
+
+24 + 9 = Bay 33 on the labels, because the labels on the bays are also numbered starting with 0, but they don't reset back to 0 when going to the rear (like RAID card slot numbers do).
+
+In the SID hardware record, in the failed drives notes we always explicitly put both "Front" or "Rear" along with the bay number along with the parenthesis note that it'll be the N+1 disk in that enclosure.
