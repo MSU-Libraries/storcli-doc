@@ -134,12 +134,17 @@ storcli64 show
 
 **For Dell PERC branded cards**  
 Dell's hardware based PERC cards are based on the same chipsets, but require you download PERCCLI instead of StorCLI. You
-will want to download the latest "PERCLI Utility" for Linux from Dell's support site. Download and extract the contents.  
+will want to download the latest "PERCLI Utility" for Linux from Dell's support site. Go to the
+[LINUX PERCCLI Utility For All PERC Controllers](https://www.dell.com/support/home/en-us/drivers/driversdetails?driverid=f48c2) page
+and using the "Enter Details" button you can paste in the serial number and select the RHEL 7 option to get the latest driver
+(select the "A gnu zip file for software installation" package to download). 
+
+Download and extract the contents.  
 ```
-tar -xzvf Perccli_7.1020.0000_Linux.tar.gz
+tar -xzvf PERCCLI_N65F1_7.1420.00_A10_Linux.tar.gz
 ```
 
-The downloaded file wil only contain a RPM package. For Ubuntu/Debian, use `alien` to create a `.deb` package.  
+If the downloaded file contains only a RPM package. For Ubuntu/Debian, use `alien` to create a `.deb` package.  
 ```
 # Install alien if not already installed
 sudo apt install alien
@@ -150,7 +155,7 @@ sudo alien perccli-007.1020.0000.0000-1.noarch.rpm
 
 Copy the pacakge to the appropriate server and install it:  
 ```
-sudo dpkg -i perccli_007.1020.0000.0000-2_all.deb
+sudo dpkg -i perccli_007.1420.0000.0000_all.deb
 ```
 
 The default location PERCCLI installs is `/opt/MegaRAID/perccli/`. For consistency sake, we can link this like a `storcli64`
