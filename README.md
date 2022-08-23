@@ -1,6 +1,10 @@
 StorCLI Documentation
 ===========================
 
+This documentation aims to provide some basic overview of use of StorCLI. For
+more in-depth detail about use of StorCLI, refer to the official StorCLI
+Reference Manual available from Broadcom.
+
 Table of Contents
 ---------------------------
 * [Introduction](#introduction)
@@ -20,12 +24,12 @@ Table of Contents
 
 Introduction
 ---------------------------
-StorCLI is a utility to monitor and manage LSI/Avago hardware RAID cards.  
+StorCLI is a utility to monitor and manage LSI/Avago hardware RAID cards (e.g. MegaRAID cards).  
 
 Dell PERC RAID controllers are mostly based on the same chipsets, thus the below can also work with PERC cards, although they require PERCCLI from Dell (which is just a rebranded version of StorCLI).  
 
 For the purposes of this documentation, we will assume you are working on an
-Ubuntu 16.04 based server. If you are using a different distribution, your steps
+Ubuntu based server. If you are using a different distribution, your steps
 may differ from below. Unless otherwise stated, all commands should be run with
 root privileges (e.g. `sudo`).  
 
@@ -40,7 +44,7 @@ that manages one or more RAIDs. The most common RAID types are:
  - RAID1 - This is where two drives are mirrored exactly. If one drives fails, the other has exactly the same information. Smallest possible RAID with redundancy.
  - RAID10 - This is the combination of RAID1 and RAID0, where multiple RAID1 are joined together. Provides increased performance with redundancy.
  - RAID5 - This is where 3 or more drives are joined together. To provide redundancy, parity information is distributed across all drives, allowing any 1 drive to fail. Provides limited redundancy without sacrificing too much space (1 drive worth).
- - RAID6 - This is where 4 or more drives are joined together. Provides redundancy similar to RAID5, only it can survive any 2 drives failing at once. Provides more redundancy than RAID5 while sacrificing a little more space (2 drives worth).
+ - RAID6 - This is where 4 or more drives are joined together. Provides more redundancy than RAID5; it can survive any 2 drives failing at once. Sacrifices a little more space than RAID5, 2 drives instead of just 1.
 
 **Controller**  
 The RAID card; if you have more than one RAID card installed, you will have more than one controller. Some
@@ -88,26 +92,21 @@ Once StorCLI is downloaded onto the server, unzip the file. If you haven't insta
 apt-get install unzip
 ```
 
-Unzipping the file (`1.21.16_StorCLI.zip` in this example) will create some directories, one of which will
-contain another zip file.  
+Unzipping the file will create a number of directories in your current directory.
 ```
-unzip 1.21.16_StorCLI.zip 
-```
-
-Proceed to unzip the newly extracted zip file.  
-```
-cd versionChangeSet/univ_viva_cli_rel/
-unzip storcli_All_OS.zip
+unzip 007.2203.0000.0000_Unified_StorCLI-PUL.zip
 ```
 
 This will extract many different types of StorCLI built for various operating systems. Here we'll use
-the Ubuntu version. There is also a `read_me.txt` file for each isntance of StorCLI, which you should
-look at, in case there are special instructions.  
+the Ubuntu `.deb` version, but there are other options, like `.rpm`, also included.
 
-Now we can install the `.deb` file using `dpkg`.
+Let's install the `.deb` file using `dpkg` or `apt`.
 ```
-cd storcli_All_OS/Ubuntu/
-dpkg -i storcli_1.21.06_all.deb
+cd Ubuntu/
+# Using dpkg
+dpkg -i storcli_007.2203.0000.0000_all.deb
+# Using apt
+apt install ./storcli_007.2203.0000.0000_all.deb
 ```
 
 Pay attention for errors, if installation went well, you should have the `storcli64` tool installed
@@ -147,15 +146,15 @@ tar -xzvf PERCCLI_N65F1_7.1420.00_A10_Linux.tar.gz
 If the downloaded file contains only a RPM package. For Ubuntu/Debian, use `alien` to create a `.deb` package.  
 ```
 # Install alien if not already installed
-sudo apt install alien
+apt install alien
 
-# Convert RPM to DEB (run with root privileges)
-sudo alien perccli-007.1020.0000.0000-1.noarch.rpm
+# Convert RPM to DEB (be sure to run with root privileges)
+alien perccli-007.1020.0000.0000-1.noarch.rpm
 ```
 
 Copy the pacakge to the appropriate server and install it:  
 ```
-sudo dpkg -i perccli_007.1420.0000.0000_all.deb
+dpkg -i perccli_007.1420.0000.0000_all.deb
 ```
 
 The default location PERCCLI installs is `/opt/MegaRAID/perccli/`. For consistency sake, we can link this like a `storcli64`
@@ -237,32 +236,47 @@ To update the firmware for controller `0` using rom file `mr3108fw.rom`:
 storcli64 /c0 download file=mr3108fw.rom
 ```
 
+Creating Virtal Drives (RAIDs)
+---------------------------
+TODO
+
 Consistency Check Impact
 ---------------------------
-By default, the RAID controller will perform a concurrent (that is, all disks at once) data consistency check every
-168 hours (7 days). This check is set to allow performance impact of 30% while it is running, also by default.  
+By default, the RAID controller will perform a concurrent (that is, all virtual disks at once) data consistency check
+every 168 hours (7 days). This check also defaults to allow a performance impact of 30% while it is running.  
 
-This consistency check (CC) be disabled, but it is not recommended unless any performance impact is unacceptable.  
+These consistency check (CC) settings can impact performance quite significantly, especially with larger virtual
+drives using spindle disks that take long time to run the CC.
+
+This consistency check (CC) can be disabled, but this is _not_ recommended unless any performance impact
+is unacceptable.  
 ```
+# NOT RECOMMENDED
 storcli64 /cx set cc=off
 ```
 
+### Viewing CC Info
+You can use StorCLI to view setting and status of CC:
+```
+# Show CC operation mode and schedule
+storcli64 /cx show cc
+# See what the current CC performance impact setting is
+storcli64 /cx show ccrate
+# See current state of CC on a virtual drive
+storcli64 /cx/vx show cc
+```
+
+### Reducing the CC Impact
 Rather than disabling CC, you can lower the impact it has by:  
- * Less frequent checks
- * Checking only one disk at a time instead of all of them
- * Lower the rate at which it performs its check
-
-To change the frequency of checks and their concurrency vs sequential nature of disk scanning:  
+ * Less frequent checks.
+ * Checking only one virtual disk (e.g. RAID) at a time instead of all of them sequentually.
+ * Lower the rate at which it performs its check.
 ```
-# Set the CC to scan disks sequentially every 30 days
+# Set the CC to scan virtual disks sequentially once every 30 days
 storcli64 /cx set cc=seq delay=720
-# Set the CC to scan disks concurrently every 7 days (the default)
-storcli64 /cx set cc=conc delay=168
+# Changing CC performance impact to 10%
+storcli64 /cx set ccrate=10
 ```
-
-Monitoring
----------------------------
-TODO  
 
 
 Email Notification
@@ -334,13 +348,23 @@ if you only wanted a hotspare to be used for rebuilding DGs 2 and 3, you could s
 storcli64 /cx/ex/sx add hotsparedrive dgs=2,3
 ```
 
-Note that after a hot spare drive has been used and then the data copyback has happened on a replced drive, the former hot spare may contain a foreign configuration that may need to be cleared.  
+Note that after a hot spare drive has been used and then the data copyback has happened on a replaced drive,
+the former hot spare may contain a foreign configuration that may need to be cleared. This particular
+issue only exists on some versions of RAID controller firmware and can be avoided by upgrading firmware.  
 
-If a drive has been configured outside a RAID at some point, it might be listed as `JBOD`. If you are certain a new drive is intended to be used for rebuilding or as a hot spare, see the "Other Useful Commands" section for how to clear a `JBOD` status.  
+Note that replacement drives may not automatically be accepted for copyback or rebuild. If the drive in
+question has ever been used (e.g. a drive recieved from warranty replacement), it may show up as foreign
+or `JBOD`. The controller will not automatically make use of such as drive.
+
+If you are certain a new drive is intended to be used for rebuilding or as a hot spare, see the
+"Other Useful Commands" section for how to clear the `JBOD` and foreign configurations.  
 
 
-Clear Foreign Configurations
+
+Other Useful Commands
 ---------------------------
+
+### Clear Foreign Configurations
 If you re-use a drive for a different purpose, the previous RAID configuration will still exist on the drive
 itself. The RAID card will detect this and refuse to use the drive in question, to protect the data on the drive
 in case a mistake happened, or if your intention is to rebuild a RAID after moving disks from a different server.  
@@ -356,9 +380,7 @@ storcli64 /cx/fall del
 
 After which, you should be able to assign the drive(s) as normal unconfigured disks.  
 
-
-Other Useful Commands
----------------------------
+### Clear JBOD Status
 To clear the `JBOD` status of a disk inserted to replace a drive, you can force it to reset to an unconfigured good drive. 
 Note, this command should only be used on a drive you know is blank or that you are okay to have overwritten.  
 ```
@@ -378,14 +400,22 @@ storcli64 /cx/eall/sall show copyback
 
 Implementation Notes
 ----------------------------
-Accessing RAID physical disks is done by Controller/Enclosure/Slot. In the Libraries, we only have one RAID controller in our servers and controllers always start with 0.
+Accessing RAID physical disks is done by Controller/Enclosure/Slot. If you only have one RAID controller,
+the control id will always be 0.  
 
-However, you can have multiple enclosures, such as `vault-glfs0a` which is a 36 drive server which has two enclosures, a 24 bay one the front and a 12 bay one on the rear. However, enclosure numbering does not start at zero. For example in `vault-glfs0a`, the front bay is enclosure 4 and the rear one is enclosure 5.
+However, you can have multiple enclosures, such as a 36 drive server which has two enclosures: a 24 bay
+one the front and a 12 bay one on the rear. Note that enclosure numbering does not start at zero. It
+has commonly been the case where in 36 bay servers, the front bay is enclosure 4 and the rear bay is enclosure 5.  
 
-Within each enclosure, the bay slots always start at 0. For example, in `vault-glfs0a` the front one has slots 0 - 23 and the rear has 0 - 11.
+Within each enclosure, the physical slots always start at 0 for StorCLI purposes. In the above 36 bay
+server example, the front would have slots 0 - 23 and the rear would have slots 0 - 11.  
 
-So for the purposes of the storcli reports, referencing `/c0/e5/s9` on `vault-glfs0a` translates to: controller 0, enclosure 5 (rear in this case), slot 9 (which is the 10th bay on the rear).
+So when referencing `/c0/e5/s9`, it might translate to:
+- controller 0
+- enclosure 5 (rear in this example)
+- slot 9 (which is the 10th bay on the rear)
 
-24 + 9 = Bay 33 on the labels, because the labels on the bays are also numbered starting with 0, but they don't reset back to 0 when going to the rear (like RAID card slot numbers do).
-
-In the SID hardware record, in the failed drives notes we always explicitly put both "Front" or "Rear" along with the bay number along with the parenthesis note that it'll be the N+1 disk in that enclosure.
+That is, 24 + 9 = bay 33 when looking at physical bay labels, if the labels on the bays are also numbered
+starting with 0. That is, because they don't reset back to 0 when going to the rear (like RAID card
+slot numbers do when changing enclosures). _Be aware of your numbering,_ or you might end up pulling a
+wrong drive.  
