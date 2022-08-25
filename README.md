@@ -11,15 +11,24 @@ Table of Contents
 * [Introduction](#introduction)
 * [Terminology](#terminology)
 * [Installation](#installation)
+  - LSI/Avago using StorCLI
+  - Dell using PERCCli
 * [Basic Usage](#basic-usage)
+* [Getting Statuses](#getting-status)
+* [Changing Properties](#changing-properties)
+* [Virtual Drives](#virtual-drives)
+* [Converting Virtual Drive to Another RAID Type](#converting-virutal-drive-to-another-raid-type)
 * [Updating Firmware](#updating-firmware)
 * [Consistency Check Impact](#consistency-check-impact)
-* [Monitoring](#monitoring)
 * [Email Notification](#email-notification)
 * [Silence the Alarm](#silence-the-alarm)
 * [Set a Hotspare Drive](#set-a-hotspare-drive)
-* [Clear Foreign Configurations](#clear-foreign-configurations)
 * [Other Useful Commands](#other-useful-commands)
+  * [Spindown a Good Drive Prior to Removal](#spindown-a-good-drive-prior-to-removal)]
+  * [Clear JBOD Status](#clear-jbod-status)
+  * [Clear Foreign Configurations](#clear-foreign-configurations)
+  * [Importing Foreign Configurations](#importing-foreign-configurations)
+  * [Show Rebuild and Copyback Status](#show-rebuild-and-copyback-status)
 * [Implementation Notes](#implementation-notes)
 
 
@@ -557,7 +566,7 @@ storcli64 /cx/fall import preview
 storcli64 /cx/fall import
 ```
 
-### Show Rebuild and Copyback Statuses
+### Show Rebuild and Copyback Status
 To view the status of current RAID rebuild jobs:  
 ```
 storcli64 /cx/eall/sall show rebuild
