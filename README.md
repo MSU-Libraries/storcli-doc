@@ -14,17 +14,17 @@ Table of Contents
   - LSI/Avago using StorCLI
   - Dell using PERCCli
 * [Basic Usage](#basic-usage)
-* [Getting Statuses](#getting-status)
+* [Getting Statuses](#getting-statuses)
 * [Changing Properties](#changing-properties)
 * [Virtual Drives](#virtual-drives)
-* [Converting Virtual Drive to Another RAID Type](#converting-virutal-drive-to-another-raid-type)
+* [Convert Virtual Drive to Another RAID Type](#convert-virtual-drive-to-another-raid-type)
 * [Updating Firmware](#updating-firmware)
 * [Consistency Check Impact](#consistency-check-impact)
 * [Email Notification](#email-notification)
 * [Silence the Alarm](#silence-the-alarm)
 * [Set a Hotspare Drive](#set-a-hotspare-drive)
 * [Other Useful Commands](#other-useful-commands)
-  * [Spindown a Good Drive Prior to Removal](#spindown-a-good-drive-prior-to-removal)]
+  * [Spindown a Good Drive Prior to Removal](#spindown-a-good-drive-prior-to-removal)
   * [Clear JBOD Status](#clear-jbod-status)
   * [Clear Foreign Configurations](#clear-foreign-configurations)
   * [Importing Foreign Configurations](#importing-foreign-configurations)
@@ -351,7 +351,7 @@ storcli /cx/vx del
 storcli /cx/vx del force
 ```
 
-Converting Virtual Drive to Another RAID Type
+Convert Virtual Drive to Another RAID Type
 ---------------------------
 StorCLI supports converting (i.e. migrating) RAIDs from one type to another. Of course, during
 any major disk job, there is the risk of failure and data loss. Always have backups and understand
