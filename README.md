@@ -293,44 +293,17 @@ storcli64 /cx add vd [PROPERTIES...]
 ```
 
 Properties that can be set when creating a virtual drive:
-```
-type RAID [0|1|5|6|10|50|60]. Sets the RAID type of the configuration.
 
-name 15 characters of length. Specifies the drive name for each virtual drive.
-
-drives Valid enclosure number and valid slot numbers for the enclosure.
-In e:s|e:s-x|e:s-x,y:
-- e specifies the enclosure ID.
-- s represents the slot in the enclosure.
-- e:s-x is the range convention used to represent slots s to x in the enclosure e.
-
-pdcache on|off|default. Enables or disables PD cache.
-
-direct|cached cached: Cached I/O.
-direct: Direct I/O.
-Sets the logical drive cache policy.
-Direct I/O is the default.
-
-wt|wb wt: Write through.
-wb: Write back.
-Enables write through.
-Write back is the default.
-
-nora|ra|adra ra: Read ahead.
-nora: No read ahead.
-adra: Adaptive read ahead.
-Disables read ahead.
-Enabled (ra) is the default.
-
-cachedbadbbu|nocachedbadbbu cachedbadbbu: Enable bad BBU caching.
-nocachedbadbbu: Disable bad BBU caching.
-Enables caching when BBU is not functioning.
-Disabled is the default.
-
-cachevd — Enables SSD caching on the created virtual drive.
-
-strip 8, 16, 32, 64, 128, 256, 512, 1024. Sets the strip size for the RAID configuration.
-```
+| property | values | default | example | description |
+| ------ | ------ | ------ | ------- | ------ |
+| type | 0,1,5,6,10,50,60 |   | type=r5 | Sets the RAID type for the new VD |
+| name | {character string} |   | mydrive1 | A label for the VD (15 char max length) |
+| drives | comma delimited list |   | 4:2-6,5:0 | A list of of `<enclosure id>:<drive_id(s)>` |
+|      | direct,cached | direct |   | Set cached IO policy. Only one value may be set |
+|      | wt,wb,awb | wb |    | Sets cached write policy. Write-through, write-back, adaptive write-back. Only one value may be set |
+|      | ra,nora,adra | ra |     | Sets read-ahead polity. Read-ahead, no read-ahead, adaptive read-ahead. Only one value may be set |
+|      | cachevd |    |     |   If set, enables SSD caching for the VD |
+| strip | 8,16,32,64,128,256,512,1024 |    | strip=64 | Sets RAID strip size (in KB) for new VD |
 
 Example VD create commands:
 ```
