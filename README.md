@@ -3,7 +3,8 @@ StorCLI Documentation
 
 This documentation aims to provide some basic overview of use of StorCLI. For
 more in-depth detail about use of StorCLI, refer to the official StorCLI
-Reference Manual available from Broadcom.
+Reference Manual available from Broadcom. Many commands and feature that are
+only rarely going to be useful are not covered in this document.
 
 Table of Contents
 ---------------------------
@@ -176,7 +177,8 @@ the `x` is a placeholder for a number. For example:
  - `/c0` means controller 0
  - `/e4` means enclosure 4
  - `/s2` means physical disk slot 2
- - `/v1` means virtual disk 1
+ - `/d1` means drive group 1
+ - `/v1` means virtual drive 1
 
 When running commands, you may need to combine these switches together. Having spaces between the
 switches is allowed. For example:  
@@ -208,6 +210,184 @@ storcli64 /c0/e5/sall show
 Most StorCLI commands do not ask for confirmation, so be certain of what command you are entering.  
 
 
+Getting Statuses
+---------------------------
+Many things in StorCLI support the `show` command, and frequently `show all` to
+get a more detailed report. Again `x` in the examples below each represents a different
+ID number to indicates the appropriate item, or `all` to query all items of that type.
+```
+# Controller
+storcli64 /cx show
+storcli64 /cx show all      # A lot of detailed info
+
+# Enclosures
+storcli64 /cx/ex show
+storcli64 /cx/ex show all
+storcli64 /cx/eall show
+storcli64 /cx/eall show all
+
+# Physical Drive Slots
+storcli64 /cx/ex/sx show
+storcli64 /cx/ex/sx show all
+storcli64 /cx/eall/sall show
+
+# Drive Groups
+storcli64 /cx/dx show
+storcli64 /cx/dx show all
+storcli64 /cx/dall show
+
+# Virtual Drives
+storcli64 /cx/vx show
+storcli64 /cx/vx show all
+storcli64 /cx/vall show
+
+# Sound Alarm
+storcli64 /cx show alarm
+
+# Controller Properties
+storcli64 /cx show PROPERTY
+storcli64 /cx show rebuildrate
+
+# VD Properties
+storcli64 /cx/vx show PROPERTY
+storcli64 /cx/vx show name
+```
+
+
+Changing Properties
+---------------------------
+A number of example of properties that can be changed.
+This list is non-exhaustive; there are many other properties available.
+See the official StorCLI Reference Manual for more.
+
+```
+# Generic Format
+storcli64 TARGET_ID set PROPERTY=VALUE
+
+# VD Name String (15 char max)
+storcli64 /cx/vx set name=<namestring>
+# VD IO Policy
+storcli64 /cx/vx set iopolicy=<cached|direct>
+# VD Disk Cache Policy
+storcli64 /cx/vx set pdcache=<on|off|default>
+# VD Read Cache Policy
+storcli64 /cx/vx set rdcache=<ra|nora|adra>
+# VD Write Cache Policy
+storcli64 /cx/vx set wrcache=<wt|wb|awb>
+# VD Enabled/disable SSD caching
+storcli64 /cx/vx set ssdcaching=<on|off>
+# Sound Alarm
+storcli64 /cx set alarm=<on|off|silence>
+# RAID Rebuild Rate % (performance impact)
+storcli64 /cx set rebuildrate=30
+```
+
+
+Virtual Drives
+---------------------------
+### Creating a Virtual Drive
+Creating a virtual drive can require quite a long command, needing all (or at least most)
+of the information about the drive to be passed. In its most basic form, the command is:
+```
+storcli64 /cx add vd [PROPERTIES...]
+```
+
+Properties that can be set when creating a virtual drive:
+```
+type RAID [0|1|5|6|10|50|60]. Sets the RAID type of the configuration.
+
+name 15 characters of length. Specifies the drive name for each virtual drive.
+
+drives Valid enclosure number and valid slot numbers for the enclosure.
+In e:s|e:s-x|e:s-x,y:
+- e specifies the enclosure ID.
+- s represents the slot in the enclosure.
+- e:s-x is the range convention used to represent slots s to x in the enclosure e.
+
+pdcache on|off|default. Enables or disables PD cache.
+
+direct|cached cached: Cached I/O.
+direct: Direct I/O.
+Sets the logical drive cache policy.
+Direct I/O is the default.
+
+wt|wb wt: Write through.
+wb: Write back.
+Enables write through.
+Write back is the default.
+
+nora|ra|adra ra: Read ahead.
+nora: No read ahead.
+adra: Adaptive read ahead.
+Disables read ahead.
+Enabled (ra) is the default.
+
+cachedbadbbu|nocachedbadbbu cachedbadbbu: Enable bad BBU caching.
+nocachedbadbbu: Disable bad BBU caching.
+Enables caching when BBU is not functioning.
+Disabled is the default.
+
+cachevd — Enables SSD caching on the created virtual drive.
+
+strip 8, 16, 32, 64, 128, 256, 512, 1024. Sets the strip size for the RAID configuration.
+```
+
+Example VD create commands:
+```
+# Create a RAID6 using drives:
+#  - 0 thru 7 in enclosure 4
+#  - 0 thru 3 in enclosure 5
+# Other properties left at default values.
+storcli64 /c0 add vd type=r6 name=mybrick1 drives=4:0-7,5:0-3
+
+# Create a RAID6 while setting a couple custom properties
+storcli64 /c0 add vd type=r6 name=mybrick2 drives=4:0-11 wt strip=64
+```
+
+### Initialization
+Whenever you create a new VD, you need to initialize it. StorCLI support both full
+initialization and fast initialization. Full initialization is strongly
+recommended always. This will scan and clear all the drives. While initialization is happening,
+however, drive performance will be seriously impacted.
+```
+# Start Full Initialization (default is fast init, without the 'full' keyword)
+storcli /cx/vx start init full
+# Display Initialization Status
+storcli /cx/vx show init
+# Stop Initialization (normally, would never need to do this)
+storcli /cx/vx stop init
+# Force Full Initialization (force an init on a drive that has already been initialized)
+# WARNING: THIS WILL WIPE ALL DRIVE DATA
+storcli /cx/vx start init full force
+```
+
+### Deleting a Virtual Drive
+```
+# Delete the VD (will fail if any data exists for VD)
+storcli /cx/vx del
+# Force delete the VD, destroying any data on it
+storcli /cx/vx del force
+```
+
+Converting Virtual Drive to Another RAID Type
+---------------------------
+StorCLI supports converting (i.e. migrating) RAIDs from one type to another. Of course, during
+any major disk job, there is the risk of failure and data loss. Always have backups and understand
+you may have to recreate your virtual drives from scratch in case of failure.
+
+Note that not all types of RAID can be converted to another RAID type. Neither RAID5 nor RAID6
+can be converted to RAID1. Likewise, no conversions to/from multi-level RAID types are
+possible (e.g. RAID10, RAID60).
+```
+# Convert existing RAID5 to RAID6, adding two disks (1 for parity, 1 to expand data)
+# Added disks are: enclosure 5, slot 3; enclosure 5, slot 4
+storcli64 /c0/v1 start migrate type=r6 option=add disk=e5:s3,e5:s4
+
+# Show status of migration
+storcli64 /c0/v1 show migrate
+```
+
+
 Updating Firmware
 ---------------------------
 To view your current make and model of RAID card, you can run the following. Remember to replace the `x`
@@ -236,9 +416,6 @@ To update the firmware for controller `0` using rom file `mr3108fw.rom`:
 storcli64 /c0 download file=mr3108fw.rom
 ```
 
-Creating Virtal Drives (RAIDs)
----------------------------
-TODO
 
 Consistency Check Impact
 ---------------------------
@@ -364,6 +541,21 @@ If you are certain a new drive is intended to be used for rebuilding or as a hot
 Other Useful Commands
 ---------------------------
 
+### Spindown a Good Drive Prior to Removal
+To reduce any potential for damaging a good drive by removing it while it's spinning, you can
+tell an unconfigured good drive to spin down so you can remove it safely.
+```
+storcli /cx/ex/sx spindown
+```
+
+### Clear JBOD Status
+To clear the `JBOD` status of a disk inserted to replace a drive, you can force it to reset to an unconfigured good drive. 
+Note, this command should only be used on a drive you know is blank or that you are okay to have overwritten.  
+```
+# Use an appropriate 'show' command first to determine the controller, enclosure, and drive slot.
+storcli64 /cx/ex/sx set good force
+```
+
 ### Clear Foreign Configurations
 If you re-use a drive for a different purpose, the previous RAID configuration will still exist on the drive
 itself. The RAID card will detect this and refuse to use the drive in question, to protect the data on the drive
@@ -380,14 +572,19 @@ storcli64 /cx/fall del
 
 After which, you should be able to assign the drive(s) as normal unconfigured disks.  
 
-### Clear JBOD Status
-To clear the `JBOD` status of a disk inserted to replace a drive, you can force it to reset to an unconfigured good drive. 
-Note, this command should only be used on a drive you know is blank or that you are okay to have overwritten.  
+### Importing Foreign Configurations
+It is possible to import a foreign configuration, such as if you know you drive groups are intact
+but the controller could not load them. Perhaps you are attempting to migrate a set of disks to a new
+machine. Regardless of the reason, you can query and attempt to import foreign configurations. This
+is not a full walkthrough of the process, but here are commands that should help.
 ```
-# Use an appropriate 'show' command first to determine the controller, enclosure, and drive slot.
-storcli64 /cx/ex/sx set good force
+storcli64 /cx/fall show
+storcli64 /cx/fall show all
+storcli64 /cx/fall import preview
+storcli64 /cx/fall import
 ```
 
+### Show Rebuild and Copyback Statuses
 To view the status of current RAID rebuild jobs:  
 ```
 storcli64 /cx/eall/sall show rebuild
