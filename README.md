@@ -296,7 +296,7 @@ Properties that can be set when creating a virtual drive:
 
 | property | values | default | example | description |
 | ------ | ------ | ------ | ------- | ------ |
-| type | 0,1,5,6,10,50,60 |   | type=r5 | Sets the RAID type for the new VD |
+| type | jbod,raid[0,1,5,6,10,50,60] |   | type=raid5 | Sets the RAID type for the new VD |
 | name | {character string} |   | mydrive1 | A label for the VD (15 char max length) |
 | drives | comma delimited list |   | 4:2-6,5:0 | A list of of `<enclosure id>:<drive_id(s)>` |
 |      | direct,cached | direct |   | Set cached IO policy. Only one value may be set |
@@ -307,14 +307,14 @@ Properties that can be set when creating a virtual drive:
 
 Example VD create commands:
 ```
-# Create a RAID6 using drives:
+# Create a RAID6 w/ 64K strip size using drives:
 #  - 0 thru 7 in enclosure 4
 #  - 0 thru 3 in enclosure 5
 # Other properties left at default values.
-storcli64 /c0 add vd type=r6 name=mybrick1 drives=4:0-7,5:0-3
+storcli64 /c0 add vd type=raid6 name=mybrick1 drives=4:0-7,5:0-3 strip=64
 
-# Create a RAID6 while setting a couple custom properties
-storcli64 /c0 add vd type=r6 name=mybrick2 drives=4:0-11 wt strip=64
+# Create a RAID6 w/ 64K strip size and setting a couple custom properties
+storcli64 /c0 add vd type=raid6 name=mybrick2 drives=4:0-11 wt strip=64
 ```
 
 ### Initialization
