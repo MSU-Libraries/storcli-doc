@@ -298,6 +298,7 @@ Virtual Drives
 Creating a virtual drive can require quite a long command, needing all (or at least most)
 of the information about the drive to be passed. In its most basic form, the command is:
 ```
+# Note: PROPERTIES must be in order: type, name, drives, ...
 storcli64 /cx add vd [PROPERTIES...]
 ```
 
