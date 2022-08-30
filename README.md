@@ -330,8 +330,9 @@ storcli64 /c0 add vd type=raid6 name=mybrick2 drives=4:0-11 wt strip=64
 ### Initialization
 Whenever you create a new VD, you need to initialize it. StorCLI support both full
 initialization and fast initialization. Full initialization is strongly
-recommended always. This will scan and clear all the drives. While initialization is happening,
-however, drive performance will be seriously impacted.
+recommended always. This will scan and clear all the drives. _While full initialization is happening,
+however, virtual drives may be visible_ (e.g. through `parted`) _will not be accessible_ (cannot
+create partition table).
 ```
 # Start Full Initialization (default is fast init, without the 'full' keyword)
 storcli /cx/vx start init full
