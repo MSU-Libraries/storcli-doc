@@ -10,7 +10,7 @@ document.
 * [Introduction](#introduction)
 * [Terminology](#terminology)
 * [Installation](#installation)
-  * [For LSI/Avago/Broadcom branded cards](#for-lsi-avago-broadcom-branded-cards)
+  * [For LSI/Avago/Broadcom branded cards](#for-lsiavagobroadcom-branded-cards)
   * [For Dell PERC branded cards](#for-dell-perc-branded-cards)
 * [Basic Usage](#basic-usage)
 * [Getting Statuses](#getting-statuses)
@@ -83,7 +83,7 @@ to make reference to that physical hard drive.
 
 ## Installation
 
-### For LSI/Avago/Broadcom branded cards**  
+### For LSI/Avago/Broadcom branded cards
 As StorCLI is proprietary, you will need to download the application from the official website. As of the
 writing of this document, that would be Broadcom's site. You will need to search for your model of card, and
 if StorCLI is compatible with your card, StorCLI will be listed as a download.  
@@ -394,11 +394,12 @@ storcli64 /c0 download file=mr3108fw.rom
 
 
 ## Consistency Check Impact
-By default, the RAID controller will perform a concurrent (that is, all virtual disks at once) data consistency check
-every 168 hours (7 days). This check also defaults to allow a performance impact of 30% while it is running.  
+By default, the RAID controller will perform a concurrent (that is, all virtual disks at once)
+data consistency check every 168 hours (7 days). This check also defaults to allow a performance
+impact of 30% while it is running.  
 
-These consistency check (CC) settings can impact performance quite significantly, especially with larger virtual
-drives using spindle disks that take long time to run the CC.
+These consistency check (CC) settings may impact performance quite significantly, especially with
+larger virtual drives using spindle disks that take long time to run the CC.
 
 This consistency check (CC) can be disabled, but this is _not_ recommended unless any performance impact
 is unacceptable.  
@@ -421,7 +422,7 @@ storcli64 /cx/vx show cc
 ### Reducing the CC Impact
 Rather than disabling CC, you can lower the impact it has by:  
  * Less frequent checks.
- * Checking only one virtual disk (e.g. RAID) at a time instead of all of them sequentually.
+ * Checking only one virtual disk at a time instead of all of them sequentually.
  * Lower the rate at which it performs its check.
 ```
 # Set the CC to scan virtual disks sequentially once every 30 days
@@ -432,30 +433,19 @@ storcli64 /cx set ccrate=10
 
 
 ## Email Notification
-Provided along with this documentaion is a script named `notify_raid_problem`. This is a simple
-Bash script that will send out an email to `root@localhost` in case of a degraded VD or PD.  
+Provided in a separate repository are scripts that can help monitor StorCLI controllers.
 
-Set the script to run periodically, at least once a day, via cron. In the example below, the script
-is placed in `/usr/local/sbin/` and set to run twice a day, at 4:30am and 4:30pm.  
+See the https://github.com/MSU-Libraries/megahelp repository for these scripts.
+
+For example, you can set the `megahelp-report` script to run periodically, say at least
+once a day, via cron. In the example below, at 4:30am and 4:30pm and configured to email
+out a report if a problem is detected.
 ```
 # Hardware RAID problem notification
-30 4,16 * * *   root    /usr/local/sbin/notify_raid_problem
+30 4,16 * * *   root    /usr/sbin/megahelp-report -e -a admin@example.edu
 ```
 
-By default, the script will run on controller `0`. If you have a specific controller you wish to check,
-then specify the controller number to the script.  
-```
-# Hardware RAID problem notifications for controller 1 and 2
-30 4    * * *   root    /usr/local/sbin/notify_raid_problem 1
-30 16   * * *   root    /usr/local/sbin/notify_raid_problem 2
-```
-
-Additional flags for `notify_raid_problem` are:  
-* `-h` Show help
-* `-g` Send alert email if no Global Hot Spare drive is detected
-* `-p` Print the results of the check to the terminal, even if no issues were detected
-* `-e addr@example.com` Override where the email alerts are sent (default is `root@localhost`)
-
+See the megahelp documentation for additional details.  
 
 ## Silence the Alarm
 During any failure or recovery, the controller will trigger an audible alarm that will continue to sound until
@@ -463,22 +453,17 @@ all aspects of the hardware are returned to an ideal state. The means that even 
 hard drive, the alarm will continue to sound until the RAID that was degraded has fully rebuilt back to its
 original state. Obviously, this can be an annoyance.  
 
-To silence an alarm means to stop it from sounding due to all existing known problems. This is distinctly different
-from disabling an alarm; disabling prevents the alarm from sounding for any future problems, meaning you have to
-remember to re-enable it later. As a general rule, do not disable and alarm, just silence it.  
+To silence an alarm means to stop it from sounding due to all existing known problems.
+This is distinctly different from disabling an alarm; disabling prevents the alarm from sounding for
+any future problems, meaning you have to remember to re-enable it later. As a general rule, do not
+disable and alarm, just silence it.  
 
 To silence the alarm for controller `0`, you can run:  
 ```
 storcli64 /c0 set alarm=silence
 ```
 
-Provided along with this documentaion is a script named `silence_raid_alarm`. This script merely calls
-the above command. By default, the script will run on controller `0`. If you have a specific controller you
-wish to check, then specify the controller number to the script.  
-```
-silence_raid_alarm
-silence_raid_alarm 2
-```
+Provided in the [megahelp](https://github.com/MSU-Libraries/megahelp) is script that can assist here as well, called `megahelp-silence`. See the megahelp documentation for additional details.  
 
 
 ## Set a Hotspare Drive
