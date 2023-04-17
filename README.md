@@ -1,18 +1,17 @@
-StorCLI Documentation
-===========================
+# StorCLI Documentation
 
-This documentation aims to provide some basic overview of use of StorCLI. For
-more in-depth detail about use of StorCLI, refer to the official StorCLI
-Reference Manual available from Broadcom. Many commands and feature that are
-only rarely going to be useful are not covered in this document.
+This documentation aims to provide some basic overview of use of StorCLI (which
+includes Dell's PERCCLI). For more in-depth detail about use of StorCLI, refer
+to the official StorCLI Reference Manual available from Broadcom. Many commands
+and feature that are only rarely going to be useful are not covered in this
+document.
 
-Table of Contents
----------------------------
+## Table of Contents
 * [Introduction](#introduction)
 * [Terminology](#terminology)
 * [Installation](#installation)
-  - LSI/Avago using StorCLI
-  - Dell using PERCCli
+  * [For LSI/Avago/Broadcom branded cards](#for-lsi-avago-broadcom-branded-cards)
+  * [For Dell PERC branded cards](#for-dell-perc-branded-cards)
 * [Basic Usage](#basic-usage)
 * [Getting Statuses](#getting-statuses)
 * [Changing Properties](#changing-properties)
@@ -32,9 +31,8 @@ Table of Contents
 * [Implementation Notes](#implementation-notes)
 
 
-Introduction
----------------------------
-StorCLI is a utility to monitor and manage LSI/Avago hardware RAID cards (e.g. MegaRAID cards).  
+## Introduction
+StorCLI is a utility to monitor and manage LSI/Avago/Broadcom hardware MegaRAID cards.  
 
 Dell PERC RAID controllers are mostly based on the same chipsets, thus the below can also work with PERC cards, although they require PERCCLI from Dell (which is just a rebranded version of StorCLI).  
 
@@ -44,22 +42,20 @@ may differ from below. Unless otherwise stated, all commands should be run with
 root privileges (e.g. `sudo`).  
 
 
-Terminology
----------------------------
+## Terminology
 **RAID**  
 RAID stands for Redundant Array of Independent Disks. It is a standards based way of grouping more
 than one hard drive together, whether for performance, redundancy, or both. A RAID controller is something
 that manages one or more RAIDs. The most common RAID types are:  
- - RAID0 - This is where multiple drives are joined together without any redundancy. If one drive fails, the whole RAID fails. Typically used for performance reasons.
+ - RAID0 - This is where multiple drives are joined together without any redundancy. If one drive fails, the whole RAID fails. Typically used for performance reasons, and where retention of data is not a high priority.
  - RAID1 - This is where two drives are mirrored exactly. If one drives fails, the other has exactly the same information. Smallest possible RAID with redundancy.
  - RAID10 - This is the combination of RAID1 and RAID0, where multiple RAID1 are joined together. Provides increased performance with redundancy.
  - RAID5 - This is where 3 or more drives are joined together. To provide redundancy, parity information is distributed across all drives, allowing any 1 drive to fail. Provides limited redundancy without sacrificing too much space (1 drive worth).
- - RAID6 - This is where 4 or more drives are joined together. Provides more redundancy than RAID5; it can survive any 2 drives failing at once. Sacrifices a little more space than RAID5, 2 drives instead of just 1.
+ - RAID6 - This is where 4 or more drives are joined together. Provides more redundancy than RAID5; it can survive any 2 drives failing at once. Sacrifices a little more space than RAID5, 2 drives worth of parity data instead of just 1.
 
 **Controller**  
-The RAID card; if you have more than one RAID card installed, you will have more than one controller. Some
-servers have a RAID controller integrated right into the motherboard.
-Controllers are typically identified by number and start from 0. If you only have one RAID card, it will
+The RAID card; if you have more than one RAID card installed, you will have more than one controller.
+MegaRAID controllers are identified by number and start from 0. If you only have one RAID card, it will
 likely be referenced as controller 0.  
 
 **Enclosure ID / EID**
@@ -69,24 +65,25 @@ enclosure will be identifed by a number, but the number does **not** necessarily
 likely have to query the controller to identify the EIDs available.  
 
 **Drive Group / DG**  
-A drive group is simply a grouping of drives using RAID. Each RAID you create will be a new Drive Group, typically
-starting from 0 and counting up. If you have three RAIDs being managed by your controller, their DG number will
-likely be 0, 1 and 2.  
+A drive group is simply a grouping of drives using RAID. Each RAID you create will be a new Drive Group,
+typically starting from 0 and counting up. If you have three RAIDs being managed by your controller,
+their DG number will likely be 0, 1 and 2.  
 
 **Virtual Drive / VD**  
-A virtual drive is what the controller presents to the operating system as a "drive". While you can split a Drive Group up
-into more than one Virtual Drive, you'll typically want a one-to-one mapping of VD to DG. VDs are typically 0 based
-like DGs, so if you have three Virtual Drives, their number will likely be 0, 1, and 2.  
+A virtual drive is what the controller presents to the operating system as a "drive". While you can
+split a Drive Group up into more than one Virtual Drive, you'll typically want a one-to-one mapping
+of VD to DG. VDs are typically 0 based like DGs, so if you have three Virtual Drives, their number
+will likely be 0, 1, and 2.  
 
 **Slot Number or Physical Disk / Slt or PD**  
-Each enclosure has a number of slots associated with it. Each slot is a phyical disk location where a hard drive can be
-placed. If that slot has a hard drive installed, you can use the EID and slot number to make reference to that physical
-hard drive.  
+Each enclosure has a number of slots associated with it. Each slot is a phyical disk location where a
+hard drive can be placed. If that slot has a hard drive installed, you can use the EID and slot number
+to make reference to that physical hard drive.  
 
 
-Installation
----------------------------
-**For LSI/Avago/Broadcom branded cards (for Dell, see further down)**  
+## Installation
+
+### For LSI/Avago/Broadcom branded cards**  
 As StorCLI is proprietary, you will need to download the application from the official website. As of the
 writing of this document, that would be Broadcom's site. You will need to search for your model of card, and
 if StorCLI is compatible with your card, StorCLI will be listed as a download.  
@@ -141,7 +138,7 @@ following should now work.
 storcli64 show
 ```
 
-**For Dell PERC branded cards**  
+### For Dell PERC branded cards
 Dell's hardware based PERC cards are based on the same chipsets, but require you download PERCCLI instead of StorCLI. You
 will want to download the latest "PERCLI Utility" for Linux from Dell's support site. Go to the
 [LINUX PERCCLI Utility For All PERC Controllers](https://www.dell.com/support/home/en-us/drivers/driversdetails?driverid=f48c2) page
@@ -179,8 +176,7 @@ storcli64 show
 ```
 
 
-Basic Usage
----------------------------
+## Basic Usage
 StorCLI accepts a number of switches, such as `/cx`, `/ex`, `/sx`, etc. When these are being referenced
 the `x` is a placeholder for a number. For example:  
  - `/c0` means controller 0
@@ -219,8 +215,7 @@ storcli64 /c0/e5/sall show
 Most StorCLI commands do not ask for confirmation, so be certain of what command you are entering.  
 
 
-Getting Statuses
----------------------------
+## Getting Statuses
 Many things in StorCLI support the `show` command, and frequently `show all` to
 get a more detailed report. Again `x` in the examples below each represents a different
 ID number to indicates the appropriate item, or `all` to query all items of that type.
@@ -263,8 +258,7 @@ storcli64 /cx/vx show name
 ```
 
 
-Changing Properties
----------------------------
+## Changing Properties
 A number of example of properties that can be changed.
 This list is non-exhaustive; there are many other properties available.
 See the official StorCLI Reference Manual for more.
@@ -292,8 +286,8 @@ storcli64 /cx set rebuildrate=30
 ```
 
 
-Virtual Drives
----------------------------
+## Virtual Drives
+
 ### Creating a Virtual Drive
 Creating a virtual drive can require quite a long command, needing all (or at least most)
 of the information about the drive to be passed. In its most basic form, the command is:
@@ -353,8 +347,7 @@ storcli /cx/vx del
 storcli /cx/vx del force
 ```
 
-Convert Virtual Drive to Another RAID Type
----------------------------
+## Convert Virtual Drive to Another RAID Type
 StorCLI supports converting (i.e. migrating) RAIDs from one type to another. Of course, during
 any major disk job, there is the risk of failure and data loss. Always have backups and understand
 you may have to recreate your virtual drives from scratch in case of failure.
@@ -372,8 +365,7 @@ storcli64 /c0/v1 show migrate
 ```
 
 
-Updating Firmware
----------------------------
+## Updating Firmware
 To view your current make and model of RAID card, you can run the following. Remember to replace the `x`
 in `/cx` with your controller number.
 ```
@@ -401,8 +393,7 @@ storcli64 /c0 download file=mr3108fw.rom
 ```
 
 
-Consistency Check Impact
----------------------------
+## Consistency Check Impact
 By default, the RAID controller will perform a concurrent (that is, all virtual disks at once) data consistency check
 every 168 hours (7 days). This check also defaults to allow a performance impact of 30% while it is running.  
 
@@ -440,8 +431,7 @@ storcli64 /cx set ccrate=10
 ```
 
 
-Email Notification
----------------------------
+## Email Notification
 Provided along with this documentaion is a script named `notify_raid_problem`. This is a simple
 Bash script that will send out an email to `root@localhost` in case of a degraded VD or PD.  
 
@@ -467,8 +457,7 @@ Additional flags for `notify_raid_problem` are:
 * `-e addr@example.com` Override where the email alerts are sent (default is `root@localhost`)
 
 
-Silence the Alarm
----------------------------
+## Silence the Alarm
 During any failure or recovery, the controller will trigger an audible alarm that will continue to sound until
 all aspects of the hardware are returned to an ideal state. The means that even once you replace a failed
 hard drive, the alarm will continue to sound until the RAID that was degraded has fully rebuilt back to its
@@ -492,8 +481,7 @@ silence_raid_alarm 2
 ```
 
 
-Set a Hotspare Drive
----------------------------
+## Set a Hotspare Drive
 A global hotspare drive will be used to rebuild any DG in the event of a drive failure. Once the failed
 drive has been replaced, a "copyback" operation will copy data back to the new drive from the hotspare.
 Once complete, the drive in the hotspare slot will be available as a hotspare.  
@@ -522,8 +510,7 @@ If you are certain a new drive is intended to be used for rebuilding or as a hot
 
 
 
-Other Useful Commands
----------------------------
+## Other Useful Commands
 
 ### Spindown a Good Drive Prior to Removal
 To reduce any potential for damaging a good drive by removing it while it's spinning, you can
@@ -579,8 +566,7 @@ To view the status of current copyback jobs:
 storcli64 /cx/eall/sall show copyback
 ```
 
-Implementation Notes
-----------------------------
+## Implementation Notes
 Accessing RAID physical disks is done by Controller/Enclosure/Slot. If you only have one RAID controller,
 the control id will always be 0.  
 
