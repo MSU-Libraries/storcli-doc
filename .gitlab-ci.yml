@@ -1,0 +1,21 @@
+stages:
+  - make_release_github
+
+update_github_job:
+  stage: make_release_github
+  tags:
+    - msul-shared
+  image: alpine:latest
+  when: manual
+  only:
+    - master
+  except:
+    - tags
+  before_script:
+    - apk add git curl
+  script:
+    # Update GitHub code
+    - rm -rf storcli-doc.git
+    - git clone --mirror https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.msu.edu/msu-libraries/systems/storcli-doc.git
+    - cd storcli-doc.git
+    - git push --force --mirror https://${GITHUB_USER_TOKEN}@github.com/MSU-Libraries/storcli-doc.git
